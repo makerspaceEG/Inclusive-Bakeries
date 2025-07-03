@@ -29,9 +29,7 @@ const requestSinglePermission = async (
 	permission: Permission,
 	rationale: Rationale
 ): Promise<boolean> => {
-	console.log(`[Permission] Requesting ${permission}:`)
 	const result = await PermissionsAndroid.request(permission, rationale)
-	console.log(`[Permission] ${permission}:`, result)
 	if (result === PermissionsAndroid.RESULTS.GRANTED) {
 		return true
 	}
@@ -57,12 +55,9 @@ const ensurePermissionGranted = async (
 }
 
 export const requestPermissions = async () => {
-	console.log('[Permissions] Requesting...')
-
 	if (Platform.OS !== 'android') return
 
 	const apiLevel = parseInt(Platform.Version.toString(), 10)
-	console.log(`[Permissions] Android API level: ${apiLevel}`)
 
 	// Request Bluetooth permissions (Android 12+)
 	if (apiLevel >= 31) {
@@ -87,8 +82,6 @@ export const requestPermissions = async () => {
 				buttonPositive: 'OK',
 			}
 		)
-
-		console.log('[Permissions] Bluetooth permissions granted')
 	}
 
 	// Request Location permission (needed for BLE scan)
@@ -102,6 +95,4 @@ export const requestPermissions = async () => {
 			buttonPositive: 'OK',
 		}
 	)
-
-	console.log('[Permissions] Location permission granted')
 }
