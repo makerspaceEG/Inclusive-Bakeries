@@ -93,7 +93,7 @@ class BluetoothScaleService extends ScaleInterface {
 		this.manager.stopDeviceScan()
 	}
 
-	async connect(deviceId, onWeightUpdate) {
+	async connect(device, onWeightUpdate) {
 		if (this.connectedDevice) {
 			throw new Error('Already connected to a device')
 		}
@@ -105,8 +105,8 @@ class BluetoothScaleService extends ScaleInterface {
 			)
 
 			// Connect with timeout
-			const device = await Promise.race([
-				this.manager.connectToDevice(deviceId, {
+			const connectedDevice = await Promise.race([
+				this.manager.connectToDevice(device.id, {
 					timeout: 5000,
 					autoConnect: true, // Try this if regular connect fails
 				}),
@@ -114,21 +114,21 @@ class BluetoothScaleService extends ScaleInterface {
 			])
 
 			// Wait for service discovery
-			await device.discoverAllServicesAndCharacteristics()
+			await connectedDevice.discoverAllServicesAndCharacteristics()
 
 			// Check connection state
-			const isConnected = await device.isConnected()
+			const isConnected = await connectedDevice.isConnected()
 			console.log('Connected:', isConnected)
 			if (!isConnected) {
 				throw new Error('Device disconnected after connection')
 			}
 
-			this.connectedDevice = device
-			return device
+			this.connectedDevice = connectedDevice
+			return connectedDevice
 		} catch (error) {
 			console.error('Connection error:', error)
 			// Clean up any existing connection
-			await this.manager.cancelDeviceConnection(deviceId).catch(() => null)
+			await this.manager.cancelDeviceConnection(device.id).catch(() => null)
 			throw error
 		}
 	}

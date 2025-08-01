@@ -34,21 +34,21 @@ class MockScaleService extends ScaleInterface {
 		console.log('Mock scale: Stopping scan...')
 	}
 
-	async connect(deviceId, onWeightUpdate) {
+	async connect(device, onWeightUpdate) {
 		if (this.connectedDevice) {
 			throw new Error('Already connected to a device')
 		}
 
-		console.log('Mock scale: Connecting to device:', deviceId)
+		console.log('Mock scale: Connecting to device:', device.id)
 
 		// Simulate connection delay
 		await new Promise((resolve) => setTimeout(resolve, 1000))
 
 		this.connectedDevice = {
-			id: deviceId,
+			id: device.id,
 			name: 'Mock Scale',
 		}
-		this.deviceId = deviceId
+		this.deviceId = device.id
 		// Start sending random weight updates
 		this.startWeightUpdates(onWeightUpdate)
 

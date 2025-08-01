@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 import { Button } from 'react-native-paper'
 
@@ -7,8 +7,7 @@ import ScaleServiceFactory from '../services/ScaleServiceFactory'
 const ScaleConnectButton = ({ onConnect, onDisconnect }) => {
 	const [isConnected, setIsConnected] = useState(false)
 	const [error, setError] = useState(null)
-	const isConnectingRef = useRef(false)
-	const [, forceUpdate] = useState({})
+	const [isConnecting, setIsConnecting] = useState(false)
 
 	// Check connection status periodically
 	useEffect(() => {
@@ -19,13 +18,11 @@ const ScaleConnectButton = ({ onConnect, onDisconnect }) => {
 
 			// If connection state changed, update isConnectingRef
 			if (wasConnected !== status.isConnected) {
-				isConnectingRef.current = true
-				forceUpdate({})
+				setIsConnecting(true)
 
 				// Set a timeout to reset isConnectingRef after a short delay
 				setTimeout(() => {
-					isConnectingRef.current = false
-					forceUpdate({})
+					setIsConnecting(false)
 				}, 1000)
 			}
 		}
@@ -40,8 +37,7 @@ const ScaleConnectButton = ({ onConnect, onDisconnect }) => {
 
 	const handlePress = async () => {
 		try {
-			isConnectingRef.current = true
-			forceUpdate({})
+			setIsConnecting(true)
 			setError(null)
 			if (isConnected) {
 				await ScaleServiceFactory.disconnectFromScale()
@@ -51,14 +47,13 @@ const ScaleConnectButton = ({ onConnect, onDisconnect }) => {
 				if (onConnect) onConnect()
 			}
 		} catch (error) {
-			isConnectingRef.current = false
-			forceUpdate({})
+			setIsConnecting(false)
 			setError(error.message)
 		}
 	}
 
 	const getButtonContent = () => {
-		if (isConnectingRef.current) {
+		if (isConnecting) {
 			return (
 				<View style={styles.loadingContainer}>
 					<ActivityIndicator color="#fff" style={styles.spinner} />
@@ -77,7 +72,7 @@ const ScaleConnectButton = ({ onConnect, onDisconnect }) => {
 			<Button
 				mode="contained"
 				onPress={handlePress}
-				disabled={isConnectingRef.current}
+				disabled={isConnecting}
 				buttonColor={isConnected ? '#f44336' : '#2196F3'}
 				style={styles.button}
 			>

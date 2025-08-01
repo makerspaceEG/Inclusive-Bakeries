@@ -2,6 +2,7 @@ package expo.modules.lefuscale.device
 
 import android.content.Context
 import expo.modules.lefuscale.device.impl.HamburgerDeviceImpl
+import expo.modules.lefuscale.device.impl.FishDeviceImpl
 import com.lefu.ppbase.PPScaleDefine.PPDevicePeripheralType
 
 /**
@@ -20,7 +21,7 @@ class DeviceControllerFactory {
         fun getInstance(deviceType: PPDevicePeripheralType): AbstractDevice {
             return when (deviceType) {
                 PPDevicePeripheralType.PeripheralHamburger -> HamburgerDeviceImpl()
-                // PPDevicePeripheralType.PeripheralFish -> FishDeviceImpl()
+                PPDevicePeripheralType.PeripheralFish -> FishDeviceImpl()
 
                 // TODO: Add cases for other supported device types as they are implemented.
                 else -> throw IllegalArgumentException("Unsupported device type: $deviceType")

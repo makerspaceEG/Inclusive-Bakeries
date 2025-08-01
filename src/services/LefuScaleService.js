@@ -31,18 +31,17 @@ class LefuScaleService extends ScaleInterface {
 			if (onDeviceFound) {
 				onDeviceFound(device)
 					.then(() => {
-						if (device.name) {
-							this.device.name = device.name
-						} else {
-							this.device.name = 'Lefu Kitchen Scale'
-						}
-
 						resolveScanSuccess()
 					})
 					.catch((e) => {
-						rejectScanFailure(e)
+						LefuScaleModule.removeAllListener()
+						rejectScanFailure(new Error(e))
 					})
 			}
+		})
+
+		LefuScaleModule.addErrorListener((e) => {
+			console.log('LefuScale Error received: ', e.errorMessage)
 		})
 
 		// Early BLE failure listeners
@@ -53,7 +52,7 @@ class LefuScaleService extends ScaleInterface {
 				case 'PPBleWorkStateConnectFailed':
 				case 'PPBleDiscoverServiceFail':
 				case 'PPBleWorkStateAuthFailed':
-					LefuScaleModule.removeListener([LefuScaleEvents.ON_BLE_STATE_CHANGE])
+					LefuScaleModule.removeAllListener()
 					rejectScanFailure(
 						new Error(`BLE connection failed with state: ${event.state}`)
 					)
@@ -70,12 +69,21 @@ class LefuScaleService extends ScaleInterface {
 		LefuScaleModule.removeListener([LefuScaleEvents.ON_DEVICE_DISCOVERED])
 	}
 
-	async connect(deviceId, onWeightUpdate) {
-		await LefuScaleModule.connectToDevice(deviceId)
+	async connect(device, onWeightUpdate) {
+		const res = await LefuScaleModule.connectToDevice(device.id)
+
+		if (!res) {
+			throw new Error(
+				`Unable to connect to ${
+					device.name || 'unknown device (' + device.id + ')'
+				}!`
+			)
+		}
+
 		// Store the device info
 		this.device = {
-			id: deviceId,
-			name: 'Lefu Kitchen Scale', // Default fallback name
+			id: device.id,
+			name: device.name || 'Lefu Kitchen Scale', // Default fallback name
 		}
 
 		// Refresh all LefuModule listeners
@@ -93,13 +101,6 @@ class LefuScaleService extends ScaleInterface {
 					// TODO: Handle an overlay component to reconnect that will go away after x seconds.
 					// this.handleNotFound()
 					break
-				case 'CustomPPBWorkSearchDeviceDisconnected':
-					console.log(
-						'Successfully device disconnected, removing all listeners'
-					)
-					LefuScaleModule.removeAllListener()
-					this.isActive = false
-					this.device = null
 			}
 		})
 
@@ -115,6 +116,10 @@ class LefuScaleService extends ScaleInterface {
 			}
 		})
 
+		LefuScaleModule.addErrorListener((e) => {
+			console.log('LefuScale Error received: ', e.errorMessage)
+		})
+
 		// Set isActive to true to prevent disconnection
 		this.isActive = true
 
@@ -122,7 +127,16 @@ class LefuScaleService extends ScaleInterface {
 	}
 
 	async disconnect() {
-		await LefuScaleModule.disconnect()
+		const res = await LefuScaleModule.disconnect()
+		if (res) {
+			LefuScaleModule.removeAllListener()
+			this.isActive = false
+			this.device = null
+			console.log('Successfully disconnected from scale')
+		} else {
+			console.error('Failed to disconnect from scale')
+		}
+		return res
 	}
 
 	async readWeight(device) {

@@ -117,7 +117,7 @@ class LefuScaleService {
      * Connection status is reported via the [onConnectionStateChange] callback.
      * @param device The [PPDeviceModel] of the device to connect to.
      */
-    fun connectToDevice(deviceMac: String) {
+    fun connectToDevice(deviceMac: String): Boolean {
         stopScan()
         Log.d(TAG, "Attempting to connect to $deviceMac")
 
@@ -129,7 +129,7 @@ class LefuScaleService {
             )
             Log.e(TAG, errorMsg)
             onConnectError?.invoke(eventData)
-            return
+            return false
         }
 
         val device = discoveredDevices.find { it.deviceMac == deviceMac }
@@ -142,7 +142,7 @@ class LefuScaleService {
             )
             Log.e(TAG, errorMsg)
             onConnectError?.invoke(eventData)
-            return
+            return false
         }
 
         try {
@@ -150,34 +150,36 @@ class LefuScaleService {
 
             Log.d(TAG, "Gotten device impl: $deviceImpl ; Device type: ${device.getDevicePeripheralType()}")
 
-            this.deviceImpl!!.setDevice(device)
-            this.deviceImpl!!.startDataListener()
-            this.deviceImpl!!.connect()
+            this.deviceImpl!!.setup(device)
             this.setupEventListeners()
-
-            // device reconnection
-            this.deviceImpl?.autoReconnect()
+            this.deviceImpl!!.connect(device)
 
             Log.d(TAG, "Connection process started for ${device.deviceMac}")
+
+            return true
         } catch (e: IllegalArgumentException) {
             Log.e(TAG, "Unsupported device type: ${device.getDevicePeripheralType()}", e)
             val eventData = mapOf(
                 "state" to "connectToDevice",
-                "errorMessage" to "Unsupported Device"
+                "errorMessage" to "Unsupported device type: ${device.getDevicePeripheralType()}"
             )
             onConnectError?.invoke(eventData)
+            return false
         }
     }
 
     /**
      * Disconnects from the currently connected device.
      */
-    fun disconnect() {
-        stopScan()
-        deviceImpl?.let { deviceToDisconnect ->
-            Log.d(TAG, "Disconnecting from ${deviceToDisconnect.lefuDevice ?: "unknown device"}")
-            deviceToDisconnect.disconnect()
+    suspend fun disconnect(): Boolean {
+        try {
+            Log.d(TAG, "Disconnecting from ${deviceImpl!!.lefuDevice?.deviceName ?: "unknown device"}")
+            deviceImpl!!.disconnect()
             deviceImpl = null
+            return true
+        } catch (e: Exception) {
+            Log.d(TAG, "Unable to disconnect from device", e)
+            return false
         }
     }
 
@@ -194,5 +196,21 @@ class LefuScaleService {
             Log.d(TAG, "Broadcast received: ${payload}")
             this.onConnectionStateChange?.invoke(payload)
         }
+    }
+
+    suspend fun toZeroKitchenScale(): Boolean {
+        return deviceImpl?.toZeroKitchenScale() ?: false
+    }
+
+    suspend fun changeKitchenScaleUnit(unit: String): Boolean {
+        return deviceImpl?.changeKitchenScaleUnit(unit) ?: false
+    }
+
+    suspend fun sendSyncTime(): Boolean {
+        return deviceImpl?.sendSyncTime() ?: false
+    }
+
+    suspend fun switchBuzzer(isOn: Boolean): Boolean {
+        return deviceImpl?.switchBuzzer(isOn) ?: false
     }
 }

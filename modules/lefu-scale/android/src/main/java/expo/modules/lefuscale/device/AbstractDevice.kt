@@ -14,47 +14,50 @@ abstract class AbstractDevice {
     var bleStateInterface: PPBleStateInterface? = null
 
     var onDataChange: ((Map<String, Any>) -> Unit)? = null
-    
     var onBroadcastReceived: ((String) -> Unit)? = null
 
-    open fun setDevice(device: PPDeviceModel) {
-        this.lefuDevice = device
-    }
+    /**
+     * Initialize the device with the provided device model.     
+     * Sets up the device controller and other necessary state before connecting.
+     */
+    abstract fun setup(device: PPDeviceModel)
 
     /**
-     * Attempts to connect to the device.
+     * Attempts to connect to the device.     
      * @return `true` if the connection was successful, `false` otherwise.
      */
-    abstract fun connect(): Boolean
+    abstract fun connect(device: PPDeviceModel): Boolean
 
     /**
-     * Adds a listener to receive bluetooth status of the device.
+     * Disconnect and clean up the device.
      */
-    abstract fun addBleStatusListener(listener: PPBleStateInterface)
+    abstract suspend fun disconnect()
 
     /**
-     * Register listener to receive data from the device.
+     * Tare the scale to zero.   
+     * @return `true` if the operation was successful, `false` otherwise.
      */
-    abstract fun startDataListener()
+    abstract suspend fun toZeroKitchenScale(): Boolean
 
     /**
-     * Unregister listener to receive data from the device.
+     * Change the scale unit type.
+     * 
+     * @param unit: The unit type to change to.  
+     * @return `true` if the operation was successful, `false` otherwise.
      */
-    abstract fun removeDataListener()
+    abstract suspend fun changeKitchenScaleUnit(unit: String): Boolean
 
     /**
-     * Gets the current status of the device.
-     * @return `true` if the device is discoverable, `false` otherwise.
+     * Send sync time to the scale.    
+     * @return `true` if the operation was successful, `false` otherwise.
      */
-    abstract fun getDeviceStatus(): Boolean
+    abstract suspend fun sendSyncTime(): Boolean
 
     /**
-     * Initialize the auto reconnect mechanism of the device
+     * Switch the buzzer on or off.   
+     *   
+     * @param isOn: Whether to turn the buzzer on or off.     
+     * @return `true` if the operation was successful, `false` otherwise.    
      */
-    abstract fun autoReconnect()
-
-    /**
-     * Disconnect from the device.
-     */
-    abstract fun disconnect()
+    abstract suspend fun switchBuzzer(isOn: Boolean): Boolean
 }

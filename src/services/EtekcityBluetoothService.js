@@ -208,19 +208,19 @@ class EtekcityScaleService extends ScaleInterface {
 		}
 	}
 
-	async connect(deviceId, onWeightUpdate) {
-		console.log(`[EtekcityScale] Attempting to connect to device: ${deviceId}`)
+	async connect(device, onWeightUpdate) {
+		console.log(`[EtekcityScale] Attempting to connect to device: ${device.id}`)
 		if (!this.manager) {
 			console.error('[EtekcityScale] No BLE manager available')
 			throw new Error('Bluetooth is not supported on this platform')
 		}
 
 		try {
-			this.device = await this.manager.connectToDevice(deviceId)
+			this.device = await this.manager.connectToDevice(device.id)
 			console.log('[EtekcityScale] Connected to device')
 
 			// Save the device ID upon successful connection
-			await this.saveLastConnectedDeviceId(deviceId)
+			await this.saveLastConnectedDeviceId(device.id)
 
 			console.log('[EtekcityScale] Discovering services and characteristics')
 			await this.device.discoverAllServicesAndCharacteristics()

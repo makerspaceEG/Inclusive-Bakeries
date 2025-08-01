@@ -87,36 +87,24 @@ class ScaleServiceFactory {
 				// Checks for permissions
 				await requestPermissions()
 				// The startScan method in EtekcityBluetoothService now handles reconnection logic
-				await scaleService
-					.startScan(async (device) => {
-						console.log('Found scale for reconnected:', device.name, device.id)
 
-						try {
-							const connectedDevice = await scaleService.connect(
-								device.id,
-								(weightData) => {
-									this.emitWeightUpdate(weightData)
-								}
-							)
-							this.isConnected = true
-							this.currentDevice = connectedDevice
-							EventEmitterService.emit('connectionStatus', 'connected')
-							resolve(connectedDevice)
-						} catch (connectError) {
-							console.error(
-								'Failed to connect to device after scan/reconnect attempt:',
-								connectError
-							)
-							this.isConnected = false
-							this.currentDevice = null
-							EventEmitterService.emit('connectionStatus', 'reconnectionFailed') // Or 'connectionFailed'
-							reject(connectError)
+				// WARNING, this does not actually rejects anything,
+				// it is not a promise and will always resolves even if reject() !
+				// Fix: Removal of try catch to allow error to bubble up to handlers.
+				await scaleService.startScan(async (device) => {
+					console.log('Found scale for reconnected:', device.name, device.id)
+
+					const connectedDevice = await scaleService.connect(
+						device,
+						(weightData) => {
+							this.emitWeightUpdate(weightData)
 						}
-					})
-					.catch((e) => {
-						console.log('Connection failed, reason:', e)
-						throw new Error('Connection failed. Please try again.')
-					})
+					)
+					this.isConnected = true
+					this.currentDevice = connectedDevice
+					EventEmitterService.emit('connectionStatus', 'connected')
+					return connectedDevice
+				})
 			} catch (error) {
 				console.error('Failed to initiate scale connection:', error)
 				this.isConnected = false

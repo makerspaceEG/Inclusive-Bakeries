@@ -1,8 +1,8 @@
 package expo.modules.lefuscale
 
 import expo.modules.kotlin.modules.Module
-import com.lefu.ppbase.PPDeviceModel
 import expo.modules.kotlin.modules.ModuleDefinition
+import expo.modules.kotlin.Promise
 import expo.modules.lefuscale.device.LefuScaleService
 import kotlinx.coroutines.*
 import android.util.Log
@@ -34,19 +34,67 @@ class LefuScaleModule : Module() {
       lefuService?.startScan()
     }
 
-    AsyncFunction("connectToDevice") { mac: String? ->
-      mac?.let {
-        lefuService?.connectToDevice(it)
-      }
+    AsyncFunction("connectToDevice") { mac: String ->
+      lefuService?.connectToDevice(mac)
     }
 
-    AsyncFunction("disconnect") {
-      lefuService?.disconnect()
-      sendEvent("onBleStateChange", mapOf("state" to "CustomPPBWorkSearchDeviceDisconnected"))
+    AsyncFunction("disconnect") { promise: Promise ->
+      CoroutineScope(Dispatchers.Default).launch {
+        try {
+          val success = lefuService?.disconnect() ?: false
+          promise.resolve(success)
+        } catch (e: Exception) {
+          promise.reject("DISCONNECT_ERROR", "Failed to disconnect from scale", e)
+        }
+      }
     }
 
     AsyncFunction("stopScan") {
       lefuService?.stopScan()
+    }
+
+    AsyncFunction("toZeroKitchenScale") { promise: Promise ->
+      CoroutineScope(Dispatchers.Default).launch {
+        try {
+          val success = lefuService?.toZeroKitchenScale() ?: false
+          promise.resolve(success)
+        } catch (e: Exception) {
+          promise.resolve(false)
+        }
+      }
+    }
+
+    AsyncFunction("changeKitchenScaleUnit") { unit: String, promise: Promise ->
+      CoroutineScope(Dispatchers.Default).launch {
+        try {
+          val result = lefuService?.changeKitchenScaleUnit(unit) ?: false
+          promise.resolve(result)
+        } catch (e: Exception) {
+          promise.resolve(false)
+        }
+      }
+    }
+
+    AsyncFunction("sendSyncTime") { promise: Promise ->
+      CoroutineScope(Dispatchers.Default).launch {
+        try {
+          val success = lefuService?.sendSyncTime() ?: false
+          promise.resolve(success)
+        } catch (e: Exception) {
+          promise.resolve(false)
+        }
+      }
+    }
+
+    AsyncFunction("switchBuzzer") { isOn: Boolean, promise: Promise ->
+      CoroutineScope(Dispatchers.Default).launch {
+        try {
+          val result = lefuService?.switchBuzzer(isOn) ?: false
+          promise.resolve(result)
+        } catch (e: Exception) {
+          promise.resolve(false)
+        }
+      }
     }
 
     OnDestroy {

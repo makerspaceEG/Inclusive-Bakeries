@@ -4,6 +4,7 @@ export const LefuScaleEvents = Object.freeze({
 	ON_DEVICE_DISCOVERED: 'onDeviceDiscovered',
 	ON_BLE_STATE_CHANGE: 'onBleStateChange',
 	ON_WEIGHT_CHANGE: 'onWeightChange',
+	ON_ERROR: 'onConnectError',
 })
 
 class LefuScaleModule {
@@ -30,6 +31,22 @@ class LefuScaleModule {
 		return this.lefuScale.connectToDevice(deviceId)
 	}
 
+	async toZeroKitchenScale() {
+		return this.lefuScale.toZeroKitchenScale()
+	}
+
+	async changeKitchenScaleUnit(unit) {
+		return this.lefuScale.changeKitchenScaleUnit(unit)
+	}
+
+	async sendSyncTime() {
+		return this.lefuScale.sendSyncTime()
+	}
+
+	async switchBuzzer(isOn) {
+		return this.lefuScale.switchBuzzer(isOn)
+	}
+
 	async disconnect() {
 		return this.lefuScale.disconnect()
 	}
@@ -47,6 +64,10 @@ class LefuScaleModule {
 
 	addDeviceDiscoveredListener(callback) {
 		return this.#addListener(LefuScaleEvents.ON_DEVICE_DISCOVERED, callback)
+	}
+
+	addErrorListener(callback) {
+		return this.#addListener(LefuScaleEvents.ON_ERROR, callback)
 	}
 
 	addBleStateChangeListener(callback) {
